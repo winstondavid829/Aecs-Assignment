@@ -1,0 +1,1153 @@
+Resources:
+  MetricsTable2972A477:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      TableName: UserMatrix
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: CdkStack/MetricsTable/Resource
+  ContributorsTable16289C4E:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: "N"
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      TableName: Contributors
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: CdkStack/ContributorsTable/Resource
+  CommitsTable754F4D33:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      TableName: Github_Commits
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: CdkStack/CommitsTable/Resource
+  CommentsTableBBDBF0A8:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: "N"
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      TableName: Github_IssueComments
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: CdkStack/CommentsTable/Resource
+  PullsTable7567D7D1:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: pr_id
+          AttributeType: "N"
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: pr_id
+          KeyType: HASH
+      TableName: PullRequests
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: CdkStack/PullsTable/Resource
+  MastersRole0257C11B:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              AWS: arn:aws:iam::727433422324:user/dynamo_access
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: CdkStack/MastersRole/Resource
+  CustomFargateRoleFB8B0292:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: eks-fargate-pods.amazonaws.com
+        Version: "2012-10-17"
+      RoleName: CustomFargateRole
+    Metadata:
+      aws:cdk:path: CdkStack/CustomFargateRole/Resource
+  CustomFargateRoleDefaultPolicy81DD7F18:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:Query
+              - dynamodb:Scan
+              - dynamodb:UpdateItem
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - CommentsTableBBDBF0A8
+                  - Arn
+              - Fn::GetAtt:
+                  - CommitsTable754F4D33
+                  - Arn
+              - Fn::GetAtt:
+                  - ContributorsTable16289C4E
+                  - Arn
+              - Fn::GetAtt:
+                  - MetricsTable2972A477
+                  - Arn
+              - Fn::GetAtt:
+                  - PullsTable7567D7D1
+                  - Arn
+          - Action:
+              - ecr:BatchCheckLayerAvailability
+              - ecr:BatchGetImage
+              - ecr:GetAuthorizationToken
+              - ecr:GetDownloadUrlForLayer
+            Effect: Allow
+            Resource: "*"
+        Version: "2012-10-17"
+      PolicyName: CustomFargateRoleDefaultPolicy81DD7F18
+      Roles:
+        - Ref: CustomFargateRoleFB8B0292
+    Metadata:
+      aws:cdk:path: CdkStack/CustomFargateRole/DefaultPolicy/Resource
+  UserEKSClusterDefaultVpcA24D4E29:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: CdkStack/UserEKSCluster/DefaultVpc
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/Resource
+  UserEKSClusterDefaultVpcPublicSubnet1SubnetE6567877:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs: ""
+      CidrBlock: 10.0.0.0/18
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: aws-cdk:subnet-name
+          Value: Public
+        - Key: aws-cdk:subnet-type
+          Value: Public
+        - Key: kubernetes.io/role/elb
+          Value: "1"
+        - Key: Name
+          Value: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet1
+      VpcId:
+        Ref: UserEKSClusterDefaultVpcA24D4E29
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet1/Subnet
+  UserEKSClusterDefaultVpcPublicSubnet1RouteTable676EF26D:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags:
+        - Key: kubernetes.io/role/elb
+          Value: "1"
+        - Key: Name
+          Value: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet1
+      VpcId:
+        Ref: UserEKSClusterDefaultVpcA24D4E29
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet1/RouteTable
+  UserEKSClusterDefaultVpcPublicSubnet1RouteTableAssociation62A66484:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: UserEKSClusterDefaultVpcPublicSubnet1RouteTable676EF26D
+      SubnetId:
+        Ref: UserEKSClusterDefaultVpcPublicSubnet1SubnetE6567877
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet1/RouteTableAssociation
+  UserEKSClusterDefaultVpcPublicSubnet1DefaultRoute04D7DEB6:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: UserEKSClusterDefaultVpcIGWF372F353
+      RouteTableId:
+        Ref: UserEKSClusterDefaultVpcPublicSubnet1RouteTable676EF26D
+    DependsOn:
+      - UserEKSClusterDefaultVpcVPCGWB2FB5FEC
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet1/DefaultRoute
+  UserEKSClusterDefaultVpcPublicSubnet1EIP314B984A:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: kubernetes.io/role/elb
+          Value: "1"
+        - Key: Name
+          Value: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet1
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet1/EIP
+  UserEKSClusterDefaultVpcPublicSubnet1NATGateway16D66221:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+        Fn::GetAtt:
+          - UserEKSClusterDefaultVpcPublicSubnet1EIP314B984A
+          - AllocationId
+      SubnetId:
+        Ref: UserEKSClusterDefaultVpcPublicSubnet1SubnetE6567877
+      Tags:
+        - Key: kubernetes.io/role/elb
+          Value: "1"
+        - Key: Name
+          Value: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet1
+    DependsOn:
+      - UserEKSClusterDefaultVpcPublicSubnet1DefaultRoute04D7DEB6
+      - UserEKSClusterDefaultVpcPublicSubnet1RouteTableAssociation62A66484
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet1/NATGateway
+  UserEKSClusterDefaultVpcPublicSubnet2Subnet11D375F2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - 1
+          - Fn::GetAZs: ""
+      CidrBlock: 10.0.64.0/18
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: aws-cdk:subnet-name
+          Value: Public
+        - Key: aws-cdk:subnet-type
+          Value: Public
+        - Key: kubernetes.io/role/elb
+          Value: "1"
+        - Key: Name
+          Value: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet2
+      VpcId:
+        Ref: UserEKSClusterDefaultVpcA24D4E29
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet2/Subnet
+  UserEKSClusterDefaultVpcPublicSubnet2RouteTableBF160D42:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags:
+        - Key: kubernetes.io/role/elb
+          Value: "1"
+        - Key: Name
+          Value: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet2
+      VpcId:
+        Ref: UserEKSClusterDefaultVpcA24D4E29
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet2/RouteTable
+  UserEKSClusterDefaultVpcPublicSubnet2RouteTableAssociation793F51B6:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: UserEKSClusterDefaultVpcPublicSubnet2RouteTableBF160D42
+      SubnetId:
+        Ref: UserEKSClusterDefaultVpcPublicSubnet2Subnet11D375F2
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet2/RouteTableAssociation
+  UserEKSClusterDefaultVpcPublicSubnet2DefaultRoute3C292AA7:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: UserEKSClusterDefaultVpcIGWF372F353
+      RouteTableId:
+        Ref: UserEKSClusterDefaultVpcPublicSubnet2RouteTableBF160D42
+    DependsOn:
+      - UserEKSClusterDefaultVpcVPCGWB2FB5FEC
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet2/DefaultRoute
+  UserEKSClusterDefaultVpcPublicSubnet2EIP817C43A3:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: kubernetes.io/role/elb
+          Value: "1"
+        - Key: Name
+          Value: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet2
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet2/EIP
+  UserEKSClusterDefaultVpcPublicSubnet2NATGateway26985D80:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+        Fn::GetAtt:
+          - UserEKSClusterDefaultVpcPublicSubnet2EIP817C43A3
+          - AllocationId
+      SubnetId:
+        Ref: UserEKSClusterDefaultVpcPublicSubnet2Subnet11D375F2
+      Tags:
+        - Key: kubernetes.io/role/elb
+          Value: "1"
+        - Key: Name
+          Value: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet2
+    DependsOn:
+      - UserEKSClusterDefaultVpcPublicSubnet2DefaultRoute3C292AA7
+      - UserEKSClusterDefaultVpcPublicSubnet2RouteTableAssociation793F51B6
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PublicSubnet2/NATGateway
+  UserEKSClusterDefaultVpcPrivateSubnet1Subnet1DE49284:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs: ""
+      CidrBlock: 10.0.128.0/18
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: aws-cdk:subnet-name
+          Value: Private
+        - Key: aws-cdk:subnet-type
+          Value: Private
+        - Key: kubernetes.io/role/internal-elb
+          Value: "1"
+        - Key: Name
+          Value: CdkStack/UserEKSCluster/DefaultVpc/PrivateSubnet1
+      VpcId:
+        Ref: UserEKSClusterDefaultVpcA24D4E29
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PrivateSubnet1/Subnet
+  UserEKSClusterDefaultVpcPrivateSubnet1RouteTable72478607:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags:
+        - Key: kubernetes.io/role/internal-elb
+          Value: "1"
+        - Key: Name
+          Value: CdkStack/UserEKSCluster/DefaultVpc/PrivateSubnet1
+      VpcId:
+        Ref: UserEKSClusterDefaultVpcA24D4E29
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PrivateSubnet1/RouteTable
+  UserEKSClusterDefaultVpcPrivateSubnet1RouteTableAssociation1F43F7DC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: UserEKSClusterDefaultVpcPrivateSubnet1RouteTable72478607
+      SubnetId:
+        Ref: UserEKSClusterDefaultVpcPrivateSubnet1Subnet1DE49284
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PrivateSubnet1/RouteTableAssociation
+  UserEKSClusterDefaultVpcPrivateSubnet1DefaultRoute82877B3E:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: UserEKSClusterDefaultVpcPublicSubnet1NATGateway16D66221
+      RouteTableId:
+        Ref: UserEKSClusterDefaultVpcPrivateSubnet1RouteTable72478607
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PrivateSubnet1/DefaultRoute
+  UserEKSClusterDefaultVpcPrivateSubnet2SubnetC20D85EF:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - 1
+          - Fn::GetAZs: ""
+      CidrBlock: 10.0.192.0/18
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: aws-cdk:subnet-name
+          Value: Private
+        - Key: aws-cdk:subnet-type
+          Value: Private
+        - Key: kubernetes.io/role/internal-elb
+          Value: "1"
+        - Key: Name
+          Value: CdkStack/UserEKSCluster/DefaultVpc/PrivateSubnet2
+      VpcId:
+        Ref: UserEKSClusterDefaultVpcA24D4E29
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PrivateSubnet2/Subnet
+  UserEKSClusterDefaultVpcPrivateSubnet2RouteTable60A46093:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags:
+        - Key: kubernetes.io/role/internal-elb
+          Value: "1"
+        - Key: Name
+          Value: CdkStack/UserEKSCluster/DefaultVpc/PrivateSubnet2
+      VpcId:
+        Ref: UserEKSClusterDefaultVpcA24D4E29
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PrivateSubnet2/RouteTable
+  UserEKSClusterDefaultVpcPrivateSubnet2RouteTableAssociation020664D1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: UserEKSClusterDefaultVpcPrivateSubnet2RouteTable60A46093
+      SubnetId:
+        Ref: UserEKSClusterDefaultVpcPrivateSubnet2SubnetC20D85EF
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PrivateSubnet2/RouteTableAssociation
+  UserEKSClusterDefaultVpcPrivateSubnet2DefaultRouteD970F5F6:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: UserEKSClusterDefaultVpcPublicSubnet2NATGateway26985D80
+      RouteTableId:
+        Ref: UserEKSClusterDefaultVpcPrivateSubnet2RouteTable60A46093
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/PrivateSubnet2/DefaultRoute
+  UserEKSClusterDefaultVpcIGWF372F353:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: CdkStack/UserEKSCluster/DefaultVpc
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/IGW
+  UserEKSClusterDefaultVpcVPCGWB2FB5FEC:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId:
+        Ref: UserEKSClusterDefaultVpcIGWF372F353
+      VpcId:
+        Ref: UserEKSClusterDefaultVpcA24D4E29
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/VPCGW
+  UserEKSClusterDefaultVpcRestrictDefaultSecurityGroupCustomResourceD3FCCC11:
+    Type: Custom::VpcRestrictDefaultSG
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E
+          - Arn
+      DefaultSecurityGroupId:
+        Fn::GetAtt:
+          - UserEKSClusterDefaultVpcA24D4E29
+          - DefaultSecurityGroup
+      Account:
+        Ref: AWS::AccountId
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/DefaultVpc/RestrictDefaultSecurityGroupCustomResource/Default
+  UserEKSClusterKubectlHandlerRole29544DA0:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - Fn::If:
+            - UserEKSClusterHasEcrPublicAF3F616D
+            - Fn::Join:
+                - ""
+                - - "arn:"
+                  - Ref: AWS::Partition
+                  - :iam::aws:policy/AmazonElasticContainerRegistryPublicReadOnly
+            - Ref: AWS::NoValue
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/KubectlHandlerRole/Resource
+  UserEKSClusterKubectlHandlerRoleDefaultPolicy02F2FA39:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action: eks:DescribeCluster
+            Effect: Allow
+            Resource:
+              Fn::GetAtt:
+                - UserEKSClusterEA747F37
+                - Arn
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Resource:
+              Fn::GetAtt:
+                - UserEKSClusterCreationRole7E4C5270
+                - Arn
+        Version: "2012-10-17"
+      PolicyName: UserEKSClusterKubectlHandlerRoleDefaultPolicy02F2FA39
+      Roles:
+        - Ref: UserEKSClusterKubectlHandlerRole29544DA0
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/KubectlHandlerRole/DefaultPolicy/Resource
+  UserEKSClusterRole6B784010:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: eks.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/AmazonEKSClusterPolicy
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/Role/Resource
+  UserEKSClusterControlPlaneSecurityGroup1BDB7C5D:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EKS Control Plane Security Group
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic by default
+          IpProtocol: "-1"
+      VpcId:
+        Ref: UserEKSClusterDefaultVpcA24D4E29
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/ControlPlaneSecurityGroup/Resource
+  UserEKSClusterCreationRole7E4C5270:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              AWS:
+                - Fn::GetAtt:
+                    - UserEKSClusterKubectlHandlerRole29544DA0
+                    - Arn
+                - Fn::GetAtt:
+                    - awscdkawseksClusterResourceProviderNestedStackawscdkawseksClusterResourceProviderNestedStackResource9827C454
+                    - Outputs.CdkStackawscdkawseksClusterResourceProviderIsCompleteHandlerServiceRole10004BC8Arn
+                - Fn::GetAtt:
+                    - awscdkawseksClusterResourceProviderNestedStackawscdkawseksClusterResourceProviderNestedStackResource9827C454
+                    - Outputs.CdkStackawscdkawseksClusterResourceProviderOnEventHandlerServiceRole6CFF6D1DArn
+        Version: "2012-10-17"
+    DependsOn:
+      - UserEKSClusterDefaultVpcIGWF372F353
+      - UserEKSClusterDefaultVpcPrivateSubnet1DefaultRoute82877B3E
+      - UserEKSClusterDefaultVpcPrivateSubnet1RouteTable72478607
+      - UserEKSClusterDefaultVpcPrivateSubnet1RouteTableAssociation1F43F7DC
+      - UserEKSClusterDefaultVpcPrivateSubnet1Subnet1DE49284
+      - UserEKSClusterDefaultVpcPrivateSubnet2DefaultRouteD970F5F6
+      - UserEKSClusterDefaultVpcPrivateSubnet2RouteTable60A46093
+      - UserEKSClusterDefaultVpcPrivateSubnet2RouteTableAssociation020664D1
+      - UserEKSClusterDefaultVpcPrivateSubnet2SubnetC20D85EF
+      - UserEKSClusterDefaultVpcPublicSubnet1DefaultRoute04D7DEB6
+      - UserEKSClusterDefaultVpcPublicSubnet1EIP314B984A
+      - UserEKSClusterDefaultVpcPublicSubnet1NATGateway16D66221
+      - UserEKSClusterDefaultVpcPublicSubnet1RouteTable676EF26D
+      - UserEKSClusterDefaultVpcPublicSubnet1RouteTableAssociation62A66484
+      - UserEKSClusterDefaultVpcPublicSubnet1SubnetE6567877
+      - UserEKSClusterDefaultVpcPublicSubnet2DefaultRoute3C292AA7
+      - UserEKSClusterDefaultVpcPublicSubnet2EIP817C43A3
+      - UserEKSClusterDefaultVpcPublicSubnet2NATGateway26985D80
+      - UserEKSClusterDefaultVpcPublicSubnet2RouteTableBF160D42
+      - UserEKSClusterDefaultVpcPublicSubnet2RouteTableAssociation793F51B6
+      - UserEKSClusterDefaultVpcPublicSubnet2Subnet11D375F2
+      - UserEKSClusterDefaultVpcA24D4E29
+      - UserEKSClusterDefaultVpcRestrictDefaultSecurityGroupCustomResourceD3FCCC11
+      - UserEKSClusterDefaultVpcVPCGWB2FB5FEC
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/Resource/CreationRole/Resource
+  UserEKSClusterCreationRoleDefaultPolicyB454C065:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action: iam:PassRole
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - CustomFargateRoleFB8B0292
+                  - Arn
+              - Fn::GetAtt:
+                  - UserEKSClusterRole6B784010
+                  - Arn
+              - Fn::GetAtt:
+                  - UserEKSClusterfargateprofiledefaultPodExecutionRole3F90C31C
+                  - Arn
+          - Action:
+              - eks:CreateCluster
+              - eks:CreateFargateProfile
+              - eks:DeleteCluster
+              - eks:DescribeCluster
+              - eks:DescribeUpdate
+              - eks:TagResource
+              - eks:UntagResource
+              - eks:UpdateClusterConfig
+              - eks:UpdateClusterVersion
+            Effect: Allow
+            Resource: "*"
+          - Action:
+              - eks:DeleteFargateProfile
+              - eks:DescribeFargateProfile
+            Effect: Allow
+            Resource: "*"
+          - Action:
+              - ec2:DescribeDhcpOptions
+              - ec2:DescribeInstances
+              - ec2:DescribeNetworkInterfaces
+              - ec2:DescribeRouteTables
+              - ec2:DescribeSecurityGroups
+              - ec2:DescribeSubnets
+              - ec2:DescribeVpcs
+              - iam:CreateServiceLinkedRole
+              - iam:GetRole
+              - iam:listAttachedRolePolicies
+            Effect: Allow
+            Resource: "*"
+        Version: "2012-10-17"
+      PolicyName: UserEKSClusterCreationRoleDefaultPolicyB454C065
+      Roles:
+        - Ref: UserEKSClusterCreationRole7E4C5270
+    DependsOn:
+      - UserEKSClusterDefaultVpcIGWF372F353
+      - UserEKSClusterDefaultVpcPrivateSubnet1DefaultRoute82877B3E
+      - UserEKSClusterDefaultVpcPrivateSubnet1RouteTable72478607
+      - UserEKSClusterDefaultVpcPrivateSubnet1RouteTableAssociation1F43F7DC
+      - UserEKSClusterDefaultVpcPrivateSubnet1Subnet1DE49284
+      - UserEKSClusterDefaultVpcPrivateSubnet2DefaultRouteD970F5F6
+      - UserEKSClusterDefaultVpcPrivateSubnet2RouteTable60A46093
+      - UserEKSClusterDefaultVpcPrivateSubnet2RouteTableAssociation020664D1
+      - UserEKSClusterDefaultVpcPrivateSubnet2SubnetC20D85EF
+      - UserEKSClusterDefaultVpcPublicSubnet1DefaultRoute04D7DEB6
+      - UserEKSClusterDefaultVpcPublicSubnet1EIP314B984A
+      - UserEKSClusterDefaultVpcPublicSubnet1NATGateway16D66221
+      - UserEKSClusterDefaultVpcPublicSubnet1RouteTable676EF26D
+      - UserEKSClusterDefaultVpcPublicSubnet1RouteTableAssociation62A66484
+      - UserEKSClusterDefaultVpcPublicSubnet1SubnetE6567877
+      - UserEKSClusterDefaultVpcPublicSubnet2DefaultRoute3C292AA7
+      - UserEKSClusterDefaultVpcPublicSubnet2EIP817C43A3
+      - UserEKSClusterDefaultVpcPublicSubnet2NATGateway26985D80
+      - UserEKSClusterDefaultVpcPublicSubnet2RouteTableBF160D42
+      - UserEKSClusterDefaultVpcPublicSubnet2RouteTableAssociation793F51B6
+      - UserEKSClusterDefaultVpcPublicSubnet2Subnet11D375F2
+      - UserEKSClusterDefaultVpcA24D4E29
+      - UserEKSClusterDefaultVpcRestrictDefaultSecurityGroupCustomResourceD3FCCC11
+      - UserEKSClusterDefaultVpcVPCGWB2FB5FEC
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/Resource/CreationRole/DefaultPolicy/Resource
+  UserEKSClusterEA747F37:
+    Type: Custom::AWSCDK-EKS-Cluster
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - awscdkawseksClusterResourceProviderNestedStackawscdkawseksClusterResourceProviderNestedStackResource9827C454
+          - Outputs.CdkStackawscdkawseksClusterResourceProviderframeworkonEvent6F8E4EA4Arn
+      Config:
+        version: "1.27"
+        roleArn:
+          Fn::GetAtt:
+            - UserEKSClusterRole6B784010
+            - Arn
+        kubernetesNetworkConfig:
+          ipFamily: ipv4
+        resourcesVpcConfig:
+          subnetIds:
+            - Ref: UserEKSClusterDefaultVpcPublicSubnet1SubnetE6567877
+            - Ref: UserEKSClusterDefaultVpcPublicSubnet2Subnet11D375F2
+            - Ref: UserEKSClusterDefaultVpcPrivateSubnet1Subnet1DE49284
+            - Ref: UserEKSClusterDefaultVpcPrivateSubnet2SubnetC20D85EF
+          securityGroupIds:
+            - Fn::GetAtt:
+                - UserEKSClusterControlPlaneSecurityGroup1BDB7C5D
+                - GroupId
+          endpointPublicAccess: true
+          endpointPrivateAccess: true
+      AssumeRoleArn:
+        Fn::GetAtt:
+          - UserEKSClusterCreationRole7E4C5270
+          - Arn
+      AttributesRevision: 2
+    DependsOn:
+      - UserEKSClusterDefaultVpcIGWF372F353
+      - UserEKSClusterDefaultVpcPrivateSubnet1DefaultRoute82877B3E
+      - UserEKSClusterDefaultVpcPrivateSubnet1RouteTable72478607
+      - UserEKSClusterDefaultVpcPrivateSubnet1RouteTableAssociation1F43F7DC
+      - UserEKSClusterDefaultVpcPrivateSubnet1Subnet1DE49284
+      - UserEKSClusterDefaultVpcPrivateSubnet2DefaultRouteD970F5F6
+      - UserEKSClusterDefaultVpcPrivateSubnet2RouteTable60A46093
+      - UserEKSClusterDefaultVpcPrivateSubnet2RouteTableAssociation020664D1
+      - UserEKSClusterDefaultVpcPrivateSubnet2SubnetC20D85EF
+      - UserEKSClusterDefaultVpcPublicSubnet1DefaultRoute04D7DEB6
+      - UserEKSClusterDefaultVpcPublicSubnet1EIP314B984A
+      - UserEKSClusterDefaultVpcPublicSubnet1NATGateway16D66221
+      - UserEKSClusterDefaultVpcPublicSubnet1RouteTable676EF26D
+      - UserEKSClusterDefaultVpcPublicSubnet1RouteTableAssociation62A66484
+      - UserEKSClusterDefaultVpcPublicSubnet1SubnetE6567877
+      - UserEKSClusterDefaultVpcPublicSubnet2DefaultRoute3C292AA7
+      - UserEKSClusterDefaultVpcPublicSubnet2EIP817C43A3
+      - UserEKSClusterDefaultVpcPublicSubnet2NATGateway26985D80
+      - UserEKSClusterDefaultVpcPublicSubnet2RouteTableBF160D42
+      - UserEKSClusterDefaultVpcPublicSubnet2RouteTableAssociation793F51B6
+      - UserEKSClusterDefaultVpcPublicSubnet2Subnet11D375F2
+      - UserEKSClusterDefaultVpcA24D4E29
+      - UserEKSClusterDefaultVpcRestrictDefaultSecurityGroupCustomResourceD3FCCC11
+      - UserEKSClusterDefaultVpcVPCGWB2FB5FEC
+      - UserEKSClusterCreationRoleDefaultPolicyB454C065
+      - UserEKSClusterCreationRole7E4C5270
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/Resource/Resource/Default
+  UserEKSClusterKubectlReadyBarrier4DB79A8E:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Value: aws:cdk:eks:kubectl-ready
+    DependsOn:
+      - UserEKSClusterfargateprofiledefaultPodExecutionRole3F90C31C
+      - UserEKSClusterfargateprofiledefault695FAF2C
+      - UserEKSClusterfargateprofileUserDevFargateProfile0CF87AEA
+      - UserEKSClusterCreationRoleDefaultPolicyB454C065
+      - UserEKSClusterCreationRole7E4C5270
+      - UserEKSClusterEA747F37
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/KubectlReadyBarrier
+  UserEKSClusterAwsAuthmanifestF9CE744E:
+    Type: Custom::AWSCDK-EKS-KubernetesResource
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - awscdkawseksKubectlProviderNestedStackawscdkawseksKubectlProviderNestedStackResourceA7AEBA6B
+          - Outputs.CdkStackawscdkawseksKubectlProviderframeworkonEventEF6BC997Arn
+      Manifest:
+        Fn::Join:
+          - ""
+          - - '[{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"aws-auth","namespace":"kube-system","labels":{"aws.cdk.eks/prune-c861129ade7ef1c03b538b02ea6fbf1583a1a01840":""}},"data":{"mapRoles":"[{\"rolearn\":\"'
+            - Fn::GetAtt:
+                - MastersRole0257C11B
+                - Arn
+            - \",\"username\":\"
+            - Fn::GetAtt:
+                - MastersRole0257C11B
+                - Arn
+            - \",\"groups\":[\"system:masters\"]},{\"rolearn\":\"
+            - Fn::GetAtt:
+                - UserEKSClusterfargateprofiledefaultPodExecutionRole3F90C31C
+                - Arn
+            - \",\"username\":\"system:node:{{SessionName}}\",\"groups\":[\"system:bootstrappers\",\"system:nodes\",\"system:node-proxier\"]},{\"rolearn\":\"
+            - Fn::GetAtt:
+                - CustomFargateRoleFB8B0292
+                - Arn
+            - \",\"username\":\"system:node:{{SessionName}}\",\"groups\":[\"system:bootstrappers\",\"system:nodes\",\"system:node-proxier\"]}]","mapUsers":"[]","mapAccounts":"[]"}}]
+      ClusterName:
+        Ref: UserEKSClusterEA747F37
+      RoleArn:
+        Fn::GetAtt:
+          - UserEKSClusterCreationRole7E4C5270
+          - Arn
+      PruneLabel: aws.cdk.eks/prune-c861129ade7ef1c03b538b02ea6fbf1583a1a01840
+      Overwrite: true
+    DependsOn:
+      - UserEKSClusterKubectlReadyBarrier4DB79A8E
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/AwsAuth/manifest/Resource/Default
+  UserEKSClusterCoreDnsComputeTypePatch59749DC8:
+    Type: Custom::AWSCDK-EKS-KubernetesPatch
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - awscdkawseksKubectlProviderNestedStackawscdkawseksKubectlProviderNestedStackResourceA7AEBA6B
+          - Outputs.CdkStackawscdkawseksKubectlProviderframeworkonEventEF6BC997Arn
+      ResourceName: deployment/coredns
+      ResourceNamespace: kube-system
+      ApplyPatchJson: '{"spec":{"template":{"metadata":{"annotations":{"eks.amazonaws.com/compute-type":"fargate"}}}}}'
+      RestorePatchJson: '{"spec":{"template":{"metadata":{"annotations":{"eks.amazonaws.com/compute-type":"ec2"}}}}}'
+      ClusterName:
+        Ref: UserEKSClusterEA747F37
+      RoleArn:
+        Fn::GetAtt:
+          - UserEKSClusterCreationRole7E4C5270
+          - Arn
+      PatchType: strategic
+    DependsOn:
+      - UserEKSClusterKubectlReadyBarrier4DB79A8E
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/CoreDnsComputeTypePatch/Resource/Default
+  UserEKSClusterfargateprofiledefaultPodExecutionRole3F90C31C:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: eks-fargate-pods.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/fargate-profile-default/PodExecutionRole/Resource
+  UserEKSClusterfargateprofiledefault695FAF2C:
+    Type: Custom::AWSCDK-EKS-FargateProfile
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - awscdkawseksClusterResourceProviderNestedStackawscdkawseksClusterResourceProviderNestedStackResource9827C454
+          - Outputs.CdkStackawscdkawseksClusterResourceProviderframeworkonEvent6F8E4EA4Arn
+      AssumeRoleArn:
+        Fn::GetAtt:
+          - UserEKSClusterCreationRole7E4C5270
+          - Arn
+      Config:
+        clusterName:
+          Ref: UserEKSClusterEA747F37
+        podExecutionRoleArn:
+          Fn::GetAtt:
+            - UserEKSClusterfargateprofiledefaultPodExecutionRole3F90C31C
+            - Arn
+        selectors:
+          - namespace: default
+          - namespace: kube-system
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/fargate-profile-default/Resource/Default
+  UserEKSClusterfargateprofileUserDevFargateProfile0CF87AEA:
+    Type: Custom::AWSCDK-EKS-FargateProfile
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - awscdkawseksClusterResourceProviderNestedStackawscdkawseksClusterResourceProviderNestedStackResource9827C454
+          - Outputs.CdkStackawscdkawseksClusterResourceProviderframeworkonEvent6F8E4EA4Arn
+      AssumeRoleArn:
+        Fn::GetAtt:
+          - UserEKSClusterCreationRole7E4C5270
+          - Arn
+      Config:
+        clusterName:
+          Ref: UserEKSClusterEA747F37
+        podExecutionRoleArn:
+          Fn::GetAtt:
+            - CustomFargateRoleFB8B0292
+            - Arn
+        selectors:
+          - namespace: default
+    DependsOn:
+      - UserEKSClusterfargateprofiledefaultPodExecutionRole3F90C31C
+      - UserEKSClusterfargateprofiledefault695FAF2C
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: CdkStack/UserEKSCluster/fargate-profile-UserDevFargateProfile/Resource/Default
+  CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+      ManagedPolicyArns:
+        - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: Inline
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:AuthorizeSecurityGroupIngress
+                  - ec2:AuthorizeSecurityGroupEgress
+                  - ec2:RevokeSecurityGroupIngress
+                  - ec2:RevokeSecurityGroupEgress
+                Resource:
+                  - Fn::Join:
+                      - ""
+                      - - "arn:"
+                        - Ref: AWS::Partition
+                        - ":ec2:"
+                        - Ref: AWS::Region
+                        - ":"
+                        - Ref: AWS::AccountId
+                        - :security-group/
+                        - Fn::GetAtt:
+                            - UserEKSClusterDefaultVpcA24D4E29
+                            - DefaultSecurityGroup
+    Metadata:
+      aws:cdk:path: CdkStack/Custom::VpcRestrictDefaultSGCustomResourceProvider/Role
+  CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Fn::Sub: cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}
+        S3Key: 7f18a11296f35510ee16538afec983ed6312e12afbf81b777089a9f8e34e2474.zip
+      Timeout: 900
+      MemorySize: 128
+      Handler: __entrypoint__.handler
+      Role:
+        Fn::GetAtt:
+          - CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0
+          - Arn
+      Runtime: nodejs18.x
+      Description: Lambda function for removing all inbound/outbound rules from the VPC default security group
+    DependsOn:
+      - CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0
+    Metadata:
+      aws:cdk:path: CdkStack/Custom::VpcRestrictDefaultSGCustomResourceProvider/Handler
+      aws:asset:path: asset.7f18a11296f35510ee16538afec983ed6312e12afbf81b777089a9f8e34e2474
+      aws:asset:property: Code
+  awscdkawseksClusterResourceProviderNestedStackawscdkawseksClusterResourceProviderNestedStackResource9827C454:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        Fn::Join:
+          - ""
+          - - https://s3.
+            - Ref: AWS::Region
+            - "."
+            - Ref: AWS::URLSuffix
+            - /
+            - Fn::Sub: cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}
+            - /2f140e435a477807fd2d70e7fed97c60932cd231b5534c5390562fe08c46b09d.json
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: CdkStack/@aws-cdk--aws-eks.ClusterResourceProvider.NestedStack/@aws-cdk--aws-eks.ClusterResourceProvider.NestedStackResource
+      aws:asset:path: CdkStackawscdkawseksClusterResourceProvider56AF5AFA.nested.template.json
+      aws:asset:property: TemplateURL
+  awscdkawseksKubectlProviderNestedStackawscdkawseksKubectlProviderNestedStackResourceA7AEBA6B:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        referencetoCdkStackUserEKSClusterKubectlHandlerRole86B473DDArn:
+          Fn::GetAtt:
+            - UserEKSClusterKubectlHandlerRole29544DA0
+            - Arn
+        referencetoCdkStackUserEKSClusterDefaultVpcPrivateSubnet1Subnet7E260D08Ref:
+          Ref: UserEKSClusterDefaultVpcPrivateSubnet1Subnet1DE49284
+        referencetoCdkStackUserEKSClusterDefaultVpcPrivateSubnet2Subnet7415230CRef:
+          Ref: UserEKSClusterDefaultVpcPrivateSubnet2SubnetC20D85EF
+        referencetoCdkStackUserEKSCluster46293023ClusterSecurityGroupId:
+          Fn::GetAtt:
+            - UserEKSClusterEA747F37
+            - ClusterSecurityGroupId
+      TemplateURL:
+        Fn::Join:
+          - ""
+          - - https://s3.
+            - Ref: AWS::Region
+            - "."
+            - Ref: AWS::URLSuffix
+            - /
+            - Fn::Sub: cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}
+            - /4c1f571461de1a5fe774ffac64becd0b368444ba42dea4765fdca76fc873d6b3.json
+    DependsOn:
+      - UserEKSClusterDefaultVpcPrivateSubnet1DefaultRoute82877B3E
+      - UserEKSClusterDefaultVpcPrivateSubnet1RouteTableAssociation1F43F7DC
+      - UserEKSClusterDefaultVpcPrivateSubnet2DefaultRouteD970F5F6
+      - UserEKSClusterDefaultVpcPrivateSubnet2RouteTableAssociation020664D1
+      - UserEKSClusterKubectlHandlerRoleDefaultPolicy02F2FA39
+      - UserEKSClusterKubectlHandlerRole29544DA0
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: CdkStack/@aws-cdk--aws-eks.KubectlProvider.NestedStack/@aws-cdk--aws-eks.KubectlProvider.NestedStackResource
+      aws:asset:path: CdkStackawscdkawseksKubectlProvider6C5CC6BA.nested.template.json
+      aws:asset:property: TemplateURL
+  AllManifests579E338B:
+    Type: Custom::AWSCDK-EKS-KubernetesResource
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - awscdkawseksKubectlProviderNestedStackawscdkawseksKubectlProviderNestedStackResourceA7AEBA6B
+          - Outputs.CdkStackawscdkawseksKubectlProviderframeworkonEventEF6BC997Arn
+      Manifest: '[{"apiVersion":"v1","kind":"Service","metadata":{"name":"aecspulls-service","labels":{"aws.cdk.eks/prune-c8fa39ecca6b92a463cf25b1f3bcb9962e24f337e5":""}},"spec":{"ports":[{"port":3001,"protocol":"TCP","targetPort":8080}],"selector":{"app":"aecspulls"},"type":"NodePort"}},{"apiVersion":"v1","kind":"Service","metadata":{"name":"aecspulls-service","labels":{"aws.cdk.eks/prune-c8fa39ecca6b92a463cf25b1f3bcb9962e24f337e5":""}},"spec":{"ports":[{"port":3001,"protocol":"TCP","targetPort":8080}],"selector":{"app":"aecspulls"},"type":"NodePort"}},{"apiVersion":"v1","kind":"Service","metadata":{"name":"aecspulls-service","labels":{"aws.cdk.eks/prune-c8fa39ecca6b92a463cf25b1f3bcb9962e24f337e5":""}},"spec":{"ports":[{"port":3001,"protocol":"TCP","targetPort":8080}],"selector":{"app":"aecspulls"},"type":"NodePort"}},{"apiVersion":"v1","kind":"Service","metadata":{"name":"aecspulls-service","labels":{"aws.cdk.eks/prune-c8fa39ecca6b92a463cf25b1f3bcb9962e24f337e5":""}},"spec":{"ports":[{"port":3001,"protocol":"TCP","targetPort":8080}],"selector":{"app":"aecspulls"},"type":"NodePort"}},{"apiVersion":"v1","kind":"Service","metadata":{"name":"aecspulls-service","labels":{"aws.cdk.eks/prune-c8fa39ecca6b92a463cf25b1f3bcb9962e24f337e5":""}},"spec":{"ports":[{"port":3001,"protocol":"TCP","targetPort":8080}],"selector":{"app":"aecspulls"},"type":"NodePort"}},{"apiVersion":"v1","kind":"Service","metadata":{"name":"aecspulls-service","labels":{"aws.cdk.eks/prune-c8fa39ecca6b92a463cf25b1f3bcb9962e24f337e5":""}},"spec":{"ports":[{"port":3001,"protocol":"TCP","targetPort":8080}],"selector":{"app":"aecspulls"},"type":"NodePort"}},{"apiVersion":"v1","kind":"Service","metadata":{"name":"aecspulls-service","labels":{"aws.cdk.eks/prune-c8fa39ecca6b92a463cf25b1f3bcb9962e24f337e5":""}},"spec":{"ports":[{"port":3001,"protocol":"TCP","targetPort":8080}],"selector":{"app":"aecspulls"},"type":"NodePort"}},{"apiVersion":"v1","kind":"Service","metadata":{"name":"aecspulls-service","labels":{"aws.cdk.eks/prune-c8fa39ecca6b92a463cf25b1f3bcb9962e24f337e5":""}},"spec":{"ports":[{"port":3001,"protocol":"TCP","targetPort":8080}],"selector":{"app":"aecspulls"},"type":"NodePort"}},{"apiVersion":"v1","kind":"Service","metadata":{"name":"aecspulls-service","labels":{"aws.cdk.eks/prune-c8fa39ecca6b92a463cf25b1f3bcb9962e24f337e5":""}},"spec":{"ports":[{"port":3001,"protocol":"TCP","targetPort":8080}],"selector":{"app":"aecspulls"},"type":"NodePort"}},{"apiVersion":"v1","kind":"Service","metadata":{"name":"aecspulls-service","labels":{"aws.cdk.eks/prune-c8fa39ecca6b92a463cf25b1f3bcb9962e24f337e5":""}},"spec":{"ports":[{"port":3001,"protocol":"TCP","targetPort":8080}],"selector":{"app":"aecspulls"},"type":"NodePort"}}]'
+      ClusterName:
+        Ref: UserEKSClusterEA747F37
+      RoleArn:
+        Fn::GetAtt:
+          - UserEKSClusterCreationRole7E4C5270
+          - Arn
+      PruneLabel: aws.cdk.eks/prune-c8fa39ecca6b92a463cf25b1f3bcb9962e24f337e5
+    DependsOn:
+      - UserEKSClusterKubectlReadyBarrier4DB79A8E
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: CdkStack/AllManifests/Resource/Default
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Properties:
+      Analytics: v2:deflate64:H4sIAAAAAAAA/12RQWvDMAyFf0vvrtuUMdgxhK2UsS2ko9fhOEqqNbGLLTeEkP8+O2mbspOePiy/h7Th0Tri64Vo7VIWp2WNOe/3JOSJefTTF50SjS48/BZ5DSwp1SgGhqLhfaYnNtZU1yi70E5qYHCyvH8TphIESe0sgWFxa2NHR/bucjAKCOyHUFiCpQeUCpJHdp1MjS4xWILc8P5wlsHikCYsdbn32bvczwQ2q0w7gnviic8stlZLFIRa3R8H8bpLQ/kUtPW2rehYavDi5fzxTtEY8fZgSnLtYvKLOzagiO1BOoPUbY125zHDIxgGloHVzkjv69eim7n1eR50olWBt6Bfjs6O/k347VywCIu1FsifrkJVjY7higOrdMSjFx6tWlSFbu1KNMXz0+LXIi6NU4QN8Gyqf9yY2x8NAgAA
+    Metadata:
+      aws:cdk:path: CdkStack/CDKMetadata/Default
+    Condition: CDKMetadataAvailable
+Conditions:
+  UserEKSClusterHasEcrPublicAF3F616D:
+    Fn::Equals:
+      - Ref: AWS::Partition
+      - aws
+  CDKMetadataAvailable:
+    Fn::Or:
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - af-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ca-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-northwest-1
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-3
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - me-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - sa-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-2
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-west-2
+Outputs:
+  UserEKSClusterConfigCommand67BF1BFD:
+    Value:
+      Fn::Join:
+        - ""
+        - - "aws eks update-kubeconfig --name "
+          - Ref: UserEKSClusterEA747F37
+          - " --region "
+          - Ref: AWS::Region
+          - " --role-arn "
+          - Fn::GetAtt:
+              - MastersRole0257C11B
+              - Arn
+  UserEKSClusterGetTokenCommand6D8AC43F:
+    Value:
+      Fn::Join:
+        - ""
+        - - "aws eks get-token --cluster-name "
+          - Ref: UserEKSClusterEA747F37
+          - " --region "
+          - Ref: AWS::Region
+          - " --role-arn "
+          - Fn::GetAtt:
+              - MastersRole0257C11B
+              - Arn
+Parameters:
+  BootstrapVersion:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /cdk-bootstrap/hnb659fds/version
+    Description: Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]
+Rules:
+  CheckBootstrapVersion:
+    Assertions:
+      - Assert:
+          Fn::Not:
+            - Fn::Contains:
+                - - "1"
+                  - "2"
+                  - "3"
+                  - "4"
+                  - "5"
+                - Ref: BootstrapVersion
