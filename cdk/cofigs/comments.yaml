@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aecscomments-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aecscomments
+  template:
+    metadata:
+      labels:
+        app: aecscomments
+    spec:
+      containers:
+      - name: aecscomments-container
+        image: 727433422324.dkr.ecr.us-west-1.amazonaws.com/aecsissuecomments:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: "1"         # Maximum CPU limit (e.g., 1 core)
+            memory: "512Mi"  # Maximum memory limit (e.g., 512 megabytes)
+          requests:
+            cpu: "0.5"       # Minimum CPU request (e.g., 0.5 cores)
+            memory: "256Mi" 

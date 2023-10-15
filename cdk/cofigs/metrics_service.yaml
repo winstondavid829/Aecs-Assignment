@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aecsmetrics-service
+spec:
+  selector:
+    app: aecsmetrics
+  ports:
+  - protocol: TCP
+    port: 3000  # This is the external port where you want to expose the service
+    targetPort: 8080  # This should match the containerPort in your deployment
+  type: NodePort
