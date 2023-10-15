@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aecscomments-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aecscomments
+  template:
+    metadata:
+      labels:
+        app: aecscomments
+    spec:
+      containers:
+      - name: aecscomments-container
+        image: winstondavidj/aecscomments:latest
+        ports:
+        - containerPort: 8080

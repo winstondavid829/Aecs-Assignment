@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aecspulls-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aecspulls
+  template:
+    metadata:
+      labels:
+        app: aecspulls
+    spec:
+      containers:
+      - name: aecspulls-container
+        image: winstondavidj/aecspulls-dev:latest
+        ports:
+        - containerPort: 8080

@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aecsmetrics-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aecsmetrics
+  template:
+    metadata:
+      labels:
+        app: aecsmetrics
+    spec:
+      containers:
+      - name: aecsmetrics-container
+        image: winstondavidj/aecsmetrics-dev:latest
+        ports:
+        - containerPort: 8080

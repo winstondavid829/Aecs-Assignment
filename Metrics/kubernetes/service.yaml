@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aecsmetrics-service
+spec:
+  selector:
+    app: aecsmetrics
+  ports:
+    - protocol: TCP
+      port: 3000  # This is the port that will be exposed on the node (Minikube VM)
+      targetPort: 8080  # This is the port your container is listening on
+  type: NodePort

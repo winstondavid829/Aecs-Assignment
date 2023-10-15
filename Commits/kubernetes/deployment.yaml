@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aecscommits-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aecscommits
+  template:
+    metadata:
+      labels:
+        app: aecscommits
+    spec:
+      containers:
+      - name: aecscommits-container
+        image: winstondavidj/aecscommits:latest
+        ports:
+        - containerPort: 8080
